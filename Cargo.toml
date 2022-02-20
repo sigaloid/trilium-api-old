@@ -1,0 +1,10 @@
+[package]
+name = "trilium-api"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+nanoserde = "0.1.29"
+ureq = "2.4.0"
