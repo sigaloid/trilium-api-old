@@ -1,32 +1,4 @@
-use nanoserde::{DeJson, DeJsonErr, SerJson};
-
-use crate::{Error, Trilium};
-
-pub fn create_note(trilium: &Trilium, note: Note) -> Result<NoteResponse, crate::Error> {
-    let req = trilium
-        .agent
-        .post(&format!("{}/etapi/create-note", trilium.url))
-        .send_string(&note.serialize_json());
-    match req {
-        Ok(response) => {
-            if let Ok(string) = response.into_string() {
-                let parse: Result<NoteResponse, DeJsonErr> =
-                    nanoserde::DeJson::deserialize_json(&string);
-                if let Ok(note_response) = parse {
-                    Ok(note_response)
-                } else {
-                    Err(Error::InvalidServerResponse(Some(string)))
-                }
-            } else {
-                Err(Error::InvalidServerResponse(None))
-            }
-        }
-        Err(e) => match e {
-            ureq::Error::Status(_, _) => Err(Error::WrongPassword),
-            ureq::Error::Transport(_) => Err(Error::InvalidUrl),
-        },
-    }
-}
+use nanoserde::{DeJson, SerJson};
 
 #[derive(SerJson, DeJson)]
 pub struct Note {

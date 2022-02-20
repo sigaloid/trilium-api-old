@@ -1,36 +1,9 @@
-use crate::{Error, Trilium};
-use nanoserde::{DeJson, DeJsonErr, SerJson};
-
-pub fn patch_note(trilium: &Trilium, note: &NoteResult) -> Result<NoteResult, crate::Error> {
-    let req = trilium
-        .agent
-        .patch(&format!("{}/etapi/notes/{}", trilium.url, note.note_id))
-        .send_string(&note.serialize_json());
-    match req {
-        Ok(response) => {
-            if let Ok(string) = response.into_string() {
-                let parse: Result<NoteResult, DeJsonErr> =
-                    nanoserde::DeJson::deserialize_json(&string);
-                if let Ok(note_response) = parse {
-                    Ok(note_response)
-                } else {
-                    Err(Error::InvalidServerResponse(Some(string)))
-                }
-            } else {
-                Err(Error::InvalidServerResponse(None))
-            }
-        }
-        Err(e) => match e {
-            ureq::Error::Status(_, _) => Err(Error::WrongPassword),
-            ureq::Error::Transport(_) => Err(Error::InvalidUrl),
-        },
-    }
-}
+use nanoserde::{DeJson, SerJson};
 
 #[derive(SerJson, DeJson)]
 pub struct NoteResult {
     #[nserde(rename = "noteId")]
-    note_id: String,
+    pub note_id: String,
 
     #[nserde(rename = "title")]
     title: String,
