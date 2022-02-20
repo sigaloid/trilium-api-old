@@ -1,24 +1,23 @@
 #![allow(dead_code)]
-use create_note::Note;
-use create_note::NoteResponse;
 // Library has no tests as it would require a networked server.
 use nanoserde::DeJsonErr;
-
-mod create_note;
-mod get_note;
-mod patch_note;
-pub mod search;
+mod schemas;
+use nanoserde::SerJson;
+use schemas::create_note_response::CreateNoteResponse;
+use schemas::login::LoginSchema;
+use schemas::note::Note;
+use schemas::search_options::DepthOptions;
+use schemas::search_options::OrderDirection;
+use schemas::search_options::SearchOptions;
+use schemas::search_response::SearchResponse;
+use ureq::MiddlewareNext;
+use ureq::Request;
 
 pub struct Trilium {
     url: String,
     agent: ureq::Agent,
 }
 impl Trilium {
-    /// Create a new Trilium API agent with the given password.
-    /// # Arguments
-    ///
-    /// * `password`: The password for the Trilium installation
-    /// * `domain`: The domain for the Trilium installation (example: `https://example.com`)
     fn new(password: impl ToString, domain: impl ToString) -> Result<Trilium, Error> {
         let req = ureq::post(&format!("{}/auth/login", domain.to_string()))
             .send_string(&format!("{{\"password\":\"{}\"}}", password.to_string()));
@@ -63,7 +62,7 @@ impl Trilium {
     pub fn search_notes(
         trilium: &Trilium,
         search_options: SearchOptions,
-    ) -> Result<SearchResults, crate::Error> {
+    ) -> Result<SearchResponse, crate::Error> {
         let mut querystr = String::new();
         querystr.push_str(&format!("search=\"{}\"", search_options.search));
         if search_options.fast_search {
@@ -79,9 +78,9 @@ impl Trilium {
             querystr.push_str(&format!(
                 "&ancestorDepth={}",
                 match ancestor_depth {
-                    search::DepthOptions::LessThan(a) => format!("lt{}", a),
-                    search::DepthOptions::Exactly(a) => format!("eq{}", a),
-                    search::DepthOptions::GreaterThan(a) => format!("gt{}", a),
+                    DepthOptions::LessThan(a) => format!("lt{}", a),
+                    DepthOptions::Exactly(a) => format!("eq{}", a),
+                    DepthOptions::GreaterThan(a) => format!("gt{}", a),
                 }
             ));
         }
@@ -92,8 +91,8 @@ impl Trilium {
             querystr.push_str(&format!(
                 "&orderDirection={}",
                 match order_direction {
-                    search::OrderDirection::Ascending => "asc",
-                    search::OrderDirection::Descending => "dec",
+                    OrderDirection::Ascending => "asc",
+                    OrderDirection::Descending => "dec",
                 }
             ));
         }
@@ -111,7 +110,7 @@ impl Trilium {
         match req {
             Ok(response) => {
                 if let Ok(string) = response.into_string() {
-                    let parse: Result<SearchResults, DeJsonErr> =
+                    let parse: Result<SearchResponse, DeJsonErr> =
                         nanoserde::DeJson::deserialize_json(&string);
                     if let Ok(note_response) = parse {
                         Ok(note_response)
@@ -132,7 +131,7 @@ impl Trilium {
         }
     }
 
-    pub fn create_note(trilium: &Self, note: Note) -> Result<NoteResponse, crate::Error> {
+    pub fn create_note(trilium: &Self, note: CreateNote) -> Result<CreateNoteResponse, crate::Error> {
         let req = trilium
             .agent
             .post(&format!("{}/etapi/create-note", trilium.url))
@@ -140,7 +139,7 @@ impl Trilium {
         match req {
             Ok(response) => {
                 if let Ok(string) = response.into_string() {
-                    let parse: Result<NoteResponse, DeJsonErr> =
+                    let parse: Result<CreateNoteResponse, DeJsonErr> =
                         nanoserde::DeJson::deserialize_json(&string);
                     if let Ok(note_response) = parse {
                         Ok(note_response)
@@ -181,7 +180,7 @@ impl Trilium {
     pub fn get_note(
         trilium: &Self,
         id: impl ToString,
-    ) -> Result<get_note::NoteResult, crate::Error> {
+    ) -> Result<Note, crate::Error> {
         let req = trilium
             .agent
             .get(&format!("{}/etapi/notes/{}", trilium.url, id.to_string()))
@@ -189,7 +188,7 @@ impl Trilium {
         match req {
             Ok(response) => {
                 if let Ok(string) = response.into_string() {
-                    let parse: Result<get_note::NoteResult, DeJsonErr> =
+                    let parse: Result<Note, DeJsonErr> =
                         nanoserde::DeJson::deserialize_json(&string);
                     if let Ok(note_response) = parse {
                         Ok(note_response)
@@ -208,16 +207,16 @@ impl Trilium {
     }
     pub fn patch_note(
         trilium: &Self,
-        note: &patch_note::NoteResult,
-    ) -> Result<patch_note::NoteResult, crate::Error> {
+        note: &Note,
+    ) -> Result<Note, crate::Error> {
         let req = trilium
             .agent
-            .patch(&format!("{}/etapi/notes/{}", trilium.url, note.note_id))
+            .patch(&format!("{}/etapi/notes/{}", trilium.url, note.note_id.id))
             .send_string(&note.serialize_json());
         match req {
             Ok(response) => {
                 if let Ok(string) = response.into_string() {
-                    let parse: Result<patch_note::NoteResult, DeJsonErr> =
+                    let parse: Result<Note, DeJsonErr> =
                         nanoserde::DeJson::deserialize_json(&string);
                     if let Ok(note_response) = parse {
                         Ok(note_response)
@@ -242,27 +241,4 @@ pub enum Error {
     InvalidServerResponse(Option<String>),
 }
 
-use nanoserde::DeJson;
-use nanoserde::SerJson;
-use search::SearchOptions;
-use search::SearchResults;
-use ureq::MiddlewareNext;
-use ureq::Request;
 
-#[derive(DeJson)]
-pub struct LoginSchema {
-    #[nserde(rename = "authToken")]
-    pub auth_token: String,
-}
-
-#[derive(SerJson, DeJson)]
-pub struct ErrorResponse {
-    #[nserde(rename = "status")]
-    status: i64,
-
-    #[nserde(rename = "code")]
-    code: String,
-
-    #[nserde(rename = "message")]
-    message: String,
-}
