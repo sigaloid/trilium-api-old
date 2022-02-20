@@ -7,7 +7,7 @@ use nanoserde::DeJsonErr;
 mod create_note;
 mod get_note;
 mod patch_note;
-mod search;
+pub mod search;
 
 pub struct Trilium {
     url: String,
@@ -60,7 +60,79 @@ impl Trilium {
         })
     }
 
-    pub fn create_note(trilium: &Trilium, note: Note) -> Result<NoteResponse, crate::Error> {
+    pub fn search_notes(
+        trilium: &Trilium,
+        search_options: SearchOptions,
+    ) -> Result<SearchResults, crate::Error> {
+        let mut querystr = String::new();
+        querystr.push_str(&format!("search=\"{}\"", search_options.search));
+        if search_options.fast_search {
+            querystr.push_str("&fastSearch=true");
+        }
+        if search_options.include_archived_notes {
+            querystr.push_str("&includeArchivedNotes=true");
+        }
+        if let Some(ancestor_id) = search_options.ancestor_note_id {
+            querystr.push_str(&format!("&ancestorNoteId={}", ancestor_id));
+        }
+        if let Some(ancestor_depth) = search_options.ancestor_depth {
+            querystr.push_str(&format!(
+                "&ancestorDepth={}",
+                match ancestor_depth {
+                    search::DepthOptions::LessThan(a) => format!("lt{}", a),
+                    search::DepthOptions::Exactly(a) => format!("eq{}", a),
+                    search::DepthOptions::GreaterThan(a) => format!("gt{}", a),
+                }
+            ));
+        }
+        if let Some(order_by) = search_options.order_by {
+            querystr.push_str(&format!("&orderBy={}", order_by));
+        }
+        if let Some(order_direction) = search_options.order_direction {
+            querystr.push_str(&format!(
+                "&orderDirection={}",
+                match order_direction {
+                    search::OrderDirection::Ascending => "asc",
+                    search::OrderDirection::Descending => "dec",
+                }
+            ));
+        }
+        if let Some(limit) = search_options.limit {
+            querystr.push_str(&format!("&limit={}", limit));
+        }
+        if search_options.debug {
+            querystr.push_str("&debug=true");
+        }
+
+        let req = trilium
+            .agent
+            .get(&format!("{}/etapi/notes?{}", trilium.url, querystr))
+            .call();
+        match req {
+            Ok(response) => {
+                if let Ok(string) = response.into_string() {
+                    let parse: Result<SearchResults, DeJsonErr> =
+                        nanoserde::DeJson::deserialize_json(&string);
+                    if let Ok(note_response) = parse {
+                        Ok(note_response)
+                    } else {
+                        Err(Error::InvalidServerResponse(Some(string)))
+                    }
+                } else {
+                    Err(Error::InvalidServerResponse(None))
+                }
+            }
+            Err(e) => {
+                println!("{:?}", e);
+                match e {
+                    ureq::Error::Status(_, _) => Err(Error::WrongPassword),
+                    ureq::Error::Transport(_) => Err(Error::InvalidUrl),
+                }
+            }
+        }
+    }
+
+    pub fn create_note(trilium: &Self, note: Note) -> Result<NoteResponse, crate::Error> {
         let req = trilium
             .agent
             .post(&format!("{}/etapi/create-note", trilium.url))
@@ -86,7 +158,7 @@ impl Trilium {
         }
     }
 
-    pub fn delete_note(trilium: &Trilium, id: impl ToString) -> Result<(), crate::Error> {
+    pub fn delete_note(trilium: &Self, id: impl ToString) -> Result<(), crate::Error> {
         let req = trilium
             .agent
             .delete(&format!("{}/etapi/notes/{}", trilium.url, id.to_string()))
@@ -107,7 +179,7 @@ impl Trilium {
     }
 
     pub fn get_note(
-        trilium: &Trilium,
+        trilium: &Self,
         id: impl ToString,
     ) -> Result<get_note::NoteResult, crate::Error> {
         let req = trilium
@@ -135,7 +207,7 @@ impl Trilium {
         }
     }
     pub fn patch_note(
-        trilium: &Trilium,
+        trilium: &Self,
         note: &patch_note::NoteResult,
     ) -> Result<patch_note::NoteResult, crate::Error> {
         let req = trilium
@@ -172,6 +244,8 @@ pub enum Error {
 
 use nanoserde::DeJson;
 use nanoserde::SerJson;
+use search::SearchOptions;
+use search::SearchResults;
 use ureq::MiddlewareNext;
 use ureq::Request;
 
