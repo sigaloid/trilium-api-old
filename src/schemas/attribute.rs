@@ -1,14 +1,12 @@
 use nanoserde::{DeJson, SerJson};
 
-use super::entity_id::EntityId;
-
-#[derive(SerJson, DeJson)]
+#[derive(SerJson, DeJson, Clone)]
 pub struct Attribute {
     #[nserde(rename = "attributeId")]
-    pub attribute_id: Option<EntityId>,
+    pub attribute_id: Option<String>,
 
     #[nserde(rename = "noteId")]
-    pub note_id: EntityId,
+    pub note_id: String,
 
     #[nserde(rename = "type")]
     pub attribute_type: Option<AttributeType>,
@@ -28,7 +26,7 @@ pub struct Attribute {
     // utc_date_time: UtcDateTime,
 }
 
-#[derive(SerJson, DeJson)]
+#[derive(SerJson, DeJson, Clone)]
 pub enum AttributeType {
     #[nserde(rename = "label")]
     Label,

@@ -1,12 +1,11 @@
-use nanoserde::{SerJson, DeJson};
+use nanoserde::{DeJson, SerJson};
 
-use super::{note::Note};
+use super::note::Note;
 
-#[derive(SerJson, DeJson)]
+#[derive(SerJson, DeJson, Clone)]
 pub struct SearchResponse {
     #[nserde(rename = "results")]
     pub results: Vec<Note>,
-
     // #[nserde(rename = "debugInfo")]
-    // debug_info: 
+    // debug_info:
 }

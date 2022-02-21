@@ -1,6 +1,6 @@
 use nanoserde::{DeJson, SerJson};
 
-#[derive(SerJson, DeJson)]
+#[derive(SerJson, DeJson, Default)]
 pub struct SearchOptions {
     pub search: String,
 
@@ -18,21 +18,20 @@ pub struct SearchOptions {
 
     #[nserde(rename = "orderBy")]
     pub order_by: Option<String>, // Examples include "title", "#publicationDate", "isProtected", "isArchived", "dateCreated", "dateModified", "utcDateCreated", "utcDateModified", "parentCount", "childrenCount", "attributeCount", "labelCount", "ownedLabelCount", "relationCount", "ownedRelationCount", "relationCountIncludingLinks", "ownedRelationCountIncludingLinks", "targetRelationCount", "targetRelationCountIncludingLinks", "contentSize", "noteSize", "revisionCount"
-    
+
     #[nserde(rename = "orderDirection")]
     pub order_direction: Option<OrderDirection>, // Direction of ordering
 
     pub limit: Option<usize>, // Search limit
 
-    pub debug: bool,          // Enable debugging in response
-
+    pub debug: bool, // Enable debugging in response
 }
 
 #[derive(SerJson, DeJson)]
 pub enum OrderDirection {
     #[nserde(rename = "asc")]
     Ascending,
-    
+
     #[nserde(rename = "dec")]
     Descending,
 }

@@ -1,17 +1,15 @@
-use nanoserde::{SerJson, DeJson};
-
-use super::entity_id::EntityId;
+use nanoserde::{DeJson, SerJson};
 
 #[derive(SerJson, DeJson)]
 pub struct Branch {
     #[nserde(rename = "branchId")]
-    pub branch_id: EntityId,
+    pub branch_id: String,
 
     #[nserde(rename = "noteId")]
-    pub note_id: EntityId,
+    pub note_id: String,
 
     #[nserde(rename = "parentNoteId")]
-    pub parent_note_id: EntityId,
+    pub parent_note_id: String,
 
     #[nserde(rename = "prefix")]
     pub prefix: String,
@@ -21,7 +19,6 @@ pub struct Branch {
 
     #[nserde(rename = "isExpanded")]
     pub is_expanded: bool,
-
     // #[nserde(rename = "utcDateModified")]
     // utc_date_modified: UtcDateModified,
 }

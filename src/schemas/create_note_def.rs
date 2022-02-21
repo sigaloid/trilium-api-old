@@ -1,11 +1,11 @@
 use nanoserde::{DeJson, SerJson};
 
-use super::{entity_id::EntityId, types::NoteType};
+use super::types::NoteType;
 
 #[derive(SerJson, DeJson)]
 pub struct CreateNoteDef {
     #[nserde(rename = "parentNoteId")]
-    pub parent_note_id: EntityId,
+    pub parent_note_id: String,
 
     #[nserde(rename = "title")]
     pub title: String,
@@ -29,5 +29,5 @@ pub struct CreateNoteDef {
     pub is_expanded: bool,
 
     #[nserde(rename = "noteId")]
-    pub note_id: EntityId,
+    pub note_id: String,
 }

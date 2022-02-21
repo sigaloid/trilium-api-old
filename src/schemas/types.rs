@@ -2,13 +2,16 @@ use std::fmt;
 
 use nanoserde::{DeJson, SerJson};
 
-#[derive(SerJson, DeJson, Debug)]
+#[derive(SerJson, DeJson, Debug, Clone)]
 pub enum NoteType {
     #[nserde(rename = "text")]
     Text,
 
     #[nserde(rename = "code")]
     Code,
+
+    #[nserde(rename = "render")]
+    Render,
 
     #[nserde(rename = "file")]
     File,
@@ -19,17 +22,20 @@ pub enum NoteType {
     #[nserde(rename = "search")]
     Search,
 
+    #[nserde(rename = "relation-map")]
+    RelationMap,
+
     #[nserde(rename = "book")]
     Book,
 
-    #[nserde(rename = "relationmap")]
-    Relationmap,
+    #[nserde(rename = "note-map")]
+    NoteMap,
 
-    #[nserde(rename = "render")]
-    Render,
+    #[nserde(rename = "mermaid")]
+    Mermaid,
 }
 impl fmt::Display for NoteType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self)
     }
 }

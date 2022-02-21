@@ -1,11 +1,11 @@
-use nanoserde::{SerJson, DeJson};
+use nanoserde::{DeJson, SerJson};
 
-use super::{attribute::Attribute, entity_id::EntityId, types::NoteType};
+use super::{attribute::Attribute, types::NoteType};
 
-#[derive(SerJson, DeJson)]
+#[derive(SerJson, DeJson, Clone)]
 pub struct Note {
     #[nserde(rename = "noteId")]
-    pub note_id: EntityId,
+    pub note_id: String,
 
     #[nserde(rename = "title")]
     pub title: String,
@@ -23,16 +23,16 @@ pub struct Note {
     pub attributes: Vec<Attribute>,
 
     #[nserde(rename = "parentNoteIds")]
-    pub parent_note_ids: Vec<EntityId>,
+    pub parent_note_ids: Vec<String>,
 
     #[nserde(rename = "childNoteIds")]
-    pub child_note_ids: Vec<EntityId>,
+    pub child_note_ids: Vec<String>,
 
     #[nserde(rename = "parentBranchIds")]
-    pub parent_branch_ids: Vec<EntityId>,
+    pub parent_branch_ids: Vec<String>,
 
     #[nserde(rename = "childBranchIds")]
-    pub child_branch_ids: Vec<EntityId>,
+    pub child_branch_ids: Vec<String>,
 
     #[nserde(rename = "dateCreated")]
     pub date_created: String,
