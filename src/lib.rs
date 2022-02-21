@@ -46,7 +46,7 @@ pub struct Trilium {
     agent: ureq::Agent,
 }
 impl Trilium {
-    fn new(password: impl ToString, domain: impl ToString) -> Result<Trilium, Error> {
+    fn new(password: &impl ToString, domain: &impl ToString) -> Result<Self, Error> {
         let req = ureq::post(&format!("{}/auth/login", domain.to_string()))
             .send_string(&format!("{{\"password\":\"{}\"}}", password.to_string()));
         match req {
@@ -77,7 +77,7 @@ impl Trilium {
             },
         }
     }
-    pub fn from_auth_key(auth: String, domain: impl ToString) -> Result<Trilium, Error> {
+    pub fn from_auth_key(auth: String, domain: &impl ToString) -> Result<Self, Error> {
         let middleware =
             move |req: Request, next: MiddlewareNext<'_>| next.handle(req.set("Authorization", &auth));
         let agent = ureq::builder().middleware(middleware).build();
@@ -150,7 +150,6 @@ impl Trilium {
                 }
             }
             Err(e) => {
-                println!("{:?}", e);
                 match e {
                     ureq::Error::Status(_, _) => Err(Error::WrongPassword),
                     ureq::Error::Transport(_) => Err(Error::InvalidUrl),
@@ -159,7 +158,7 @@ impl Trilium {
         }
     }
 
-    pub fn create_note(&self, note: CreateNoteDef) -> Result<CreateNoteResponse, Error> {
+    pub fn create_note(&self, note: &CreateNoteDef) -> Result<CreateNoteResponse, Error> {
         let req = self
             .agent
             .post(&format!("{}/etapi/create-note", self.url))
@@ -185,7 +184,7 @@ impl Trilium {
         }
     }
 
-    pub fn delete_note(&self, id: impl ToString) -> Result<(), Error> {
+    pub fn delete_note(&self, id: &impl ToString) -> Result<(), Error> {
         let req = self
             .agent
             .delete(&format!("{}/etapi/notes/{}", self.url, id.to_string()))
